@@ -42,8 +42,34 @@ LDR r5, =Alpha	@ load array into r5
 MOV r6, #0		@ newx
 MOV r7, #0		@ bit shift and calculation register
 
-@ convert input to fixed here
+forloop:
+CMP r0, #44
+BGE exit
+MOV r6, #0		@ newx into r6
+CMP r4, #0
+BGT pos
+LSR r1, r3, r0	@ bit shift right by i for y
+ADD r6, r2, r1	@ newx = x + r1
+LSR r7, r2, r0	@ bit shift right by i for x
+SUB r3, r3, r7	@ y -= r7
+MOV r2, r6		@ x = newx
+LDR r8, [r5,r0]	@ loading alpha[i] into r8
+ADD r4, r8 		@ add the alpha[i] value
+ADD r0, #4		@ increment r0
+B forloop
+pos:
+LSR r1, r3, r0	@ bit shift right by i for y
+SUB r6, r2, r1	@ newx = x - r1
+LSR r7, r2, r0	@ bit shift right by i for x
+ADD r3, r3, r7	@ y += r7
+MOV r2, r6		@ x = newx
+LDR r8, [r5,r0]	@ loading alpha[i] into r8
+SUB r4, r8 		@ substract the alpha[i] value
+ADD r0, #4		@ increment r0
+B forloop
+exit:
 
+MOV r8, r3
 MOV r7, r2
 LSR r12, r7, #31        @ look at msb of number
 
@@ -72,60 +98,32 @@ LSL r12, r12, #23
 ORR r12, r12, r7
 VMOV s0, r12
 
-MOV r7, r3
-LSR r12, r7, #31        @ look at msb of number
+LSR r12, r8, #31        @ look at msb of number
 
 @ if msb == 1
 CMP r12, #0             @ check for negative (1)
 BEQ else2
 EOR r0, r0
 SUB r0, r0, #1
-EOR r7, r7, r0
-ADD r7, r7, #1
+EOR r8, r8, r0
+ADD r8, r8, #1
 
 else2:
-CLZ r0, r7
+CLZ r0, r8
 MOV r1, #16
 SUB r0, r1, r0
 ADD r1, r0, #126
 MOV r2, #8
 SUB r2, r2, r0
-LSL r7, r7, r2
+LSL r8, r8, r2
 LDR r2, =mant1
 LDR r2, [r2]
-EOR r7, r2
+EOR r8, r2
 LSL r12, r12, #8
 ORR r12, r12, r1
 LSL r12, r12, #23
-ORR r12, r12, r7
+ORR r12, r12, r8
 VMOV s1, r12
-
-forloop:
-CMP r0, #44
-BGE exit
-MOV r6, #0		@ newx into r6
-CMP r4, #0
-BGT pos
-LSR r1, r3, r0	@ bit shift right by i for y
-ADD r6, r2, r1	@ newx = x + r1
-LSR r7, r2, r0	@ bit shift right by i for x
-SUB r3, r3, r7	@ y -= r7
-MOV r2, r6		@ x = newx
-LDR r8, [r5,r0]	@ loading alpha[i] into r8
-ADD r4, r8 		@ add the alpha[i] value
-ADD r0, #4		@ increment r0
-B forloop
-pos:
-LSR r1, r3, r0	@ bit shift right by i for y
-SUB r6, r2, r1	@ newx = x - r1
-LSR r7, r2, r0	@ bit shift right by i for x
-ADD r3, r3, r7	@ y += r7
-MOV r2, r6		@ x = newx
-LDR r8, [r5,r0]	@ loading alpha[i] into r8
-SUB r4, r8 		@ substract the alpha[i] value
-ADD r0, #4		@ increment r0
-B forloop
-exit:
 
 .data
 Alpha:
@@ -145,6 +143,7 @@ Alpha:
 x:	.word	39796 @ constant times the fixed number
 y:	.word	0
 in:	.float	28.027
+@in:	.float	0
 
 mant:               .word 0x7FFFFF
 mant1:              .word 0x800000
