@@ -34,38 +34,45 @@ done:
 
 MOV r4, r7		@ put input into r4
 
-MOV r0, #0 		@ use r0 for I
+
 MOV r1, #0		@ bit shift and calculation register
-LDR r2, =x 		@ load x into r2
-LDR r3, =y 		@ load y into r3
-LDR r5, =Alpha	@ load array into r5
+LDR r0, =x		
+LDR r2, [r0] 	@ load x into r2
+LDR r0, =y		
+LDR r3, [r0]	@ load y into r3
+LDR r0, =Alpha		
+LDR r5, [r0, r1]	@ load array into r5
 MOV r6, #0		@ newx
 MOV r7, #0		@ bit shift and calculation register
+MOV r0, #0 		@ use r0 for I
 
 forloop:
 CMP r0, #44
 BGE exit
 MOV r6, #0		@ newx into r6
-CMP r4, #0
-BGT pos
-LSR r1, r3, r0	@ bit shift right by i for y
+ASR r9, r4, #31
+CMP r9, #0
+BEQ pos
+ASR r1, r3, r0	@ bit shift right by i for y
 ADD r6, r2, r1	@ newx = x + r1
-LSR r7, r2, r0	@ bit shift right by i for x
+ASR r7, r2, r0	@ bit shift right by i for x
 SUB r3, r3, r7	@ y -= r7
 MOV r2, r6		@ x = newx
+LDR	r5, =Alpha
 LDR r8, [r5,r0]	@ loading alpha[i] into r8
-ADD r4, r8 		@ add the alpha[i] value
-ADD r0, #4		@ increment r0
+ADD r4, r4, r8 		@ add the alpha[i] value
+ADD r0, r0, #4		@ increment r0
 B forloop
 pos:
-LSR r1, r3, r0	@ bit shift right by i for y
+ASR r1, r3, r0	@ bit shift right by i for y
 SUB r6, r2, r1	@ newx = x - r1
-LSR r7, r2, r0	@ bit shift right by i for x
+ASR r7, r2, r0	@ bit shift right by i for x
 ADD r3, r3, r7	@ y += r7
 MOV r2, r6		@ x = newx
+LDR	r5, =Alpha
 LDR r8, [r5,r0]	@ loading alpha[i] into r8
-SUB r4, r8 		@ substract the alpha[i] value
-ADD r0, #4		@ increment r0
+SUB r4, r4, r8 		@ substract the alpha[i] value
+ADD r0, r0, #4		@ increment r0
 B forloop
 exit:
 
@@ -142,8 +149,9 @@ Alpha:
 	
 x:	.word	39796 @ constant times the fixed number
 y:	.word	0
-in:	.float	28.027
-@in:	.float	0
+@in:	.float	28.027 @ cos = 0.88237 , sin = 0.4705
+in:	.float	0	@ cos = 1 , sin = 0
+@in:		.float	45	@ cos = 0.707, sin = 0.707
 
 mant:               .word 0x7FFFFF
 mant1:              .word 0x800000
